@@ -8,9 +8,7 @@ import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 import re
 import string
-import nltk
-nltk.download('stopwords')
-nltk.download('wordnet')
+
 
 # =========================
 # 2. Page Config
@@ -91,6 +89,7 @@ data = pd.read_csv("final_dataset.csv")
 # 6. Text Cleaning Function
 # =========================
 def clean_text(text):
+    import re, string
     text = text.lower()
     text = re.sub(r'http\S+', '', text)
     text = text.translate(str.maketrans('', '', string.punctuation))
