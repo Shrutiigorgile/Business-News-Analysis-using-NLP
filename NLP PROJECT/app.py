@@ -8,6 +8,9 @@ import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 import re
 import string
+import nltk
+nltk.download('stopwords')
+nltk.download('wordnet')
 
 # =========================
 # 2. Page Config
@@ -96,6 +99,27 @@ def clean_text(text):
     return text
 
 # =========================
+# 🔥 ADD HERE (NEW CODE)
+# =========================
+import re
+
+BUSINESS_KEYWORDS = {
+    "market","stock","economy","inflation","gdp","rbi","bank","policy",
+    "finance","growth","profit","loss","trade","investment","share","index"
+}
+
+def is_gibberish(text):
+    words = re.findall(r"[a-zA-Z]+", text.lower())
+    if len(words) < 3:
+        return True
+    short_ratio = sum(len(w) <= 2 for w in words) / len(words)
+    repeat_ratio = sum(len(set(w)) == 1 for w in words) / len(words)
+    return short_ratio > 0.6 or repeat_ratio > 0.3
+
+def is_business_like(text):
+    text = text.lower()
+    return any(k in text for k in BUSINESS_KEYWORDS)
+# =========================
 # 7. Title
 # =========================
 st.markdown("<div class='main-title'>🌙 Business News NLP Analyzer</div>", unsafe_allow_html=True)
@@ -121,7 +145,7 @@ with tab1:
     st.subheader("🧠 Analyze News")
 
     user_input = st.text_area("📝 Enter News Text")
-
+    
     if st.button("📌 Try Sample"):
         user_input = "India market shows strong economic growth"
         st.write(user_input)
@@ -129,14 +153,18 @@ with tab1:
     if st.button("🚀 Analyze Now"):
         if user_input.strip() == "":
             st.warning("⚠️ Please enter valid text")
-        elif len(user_input.split()) < 3:
-            st.warning("⚠️ Enter at least 3 words")
+
+        elif is_gibberish(user_input):
+            st.error("❌ Input looks like random / meaningless text")
+
+        elif not is_business_like(user_input):
+            st.warning("⚠️ This may not be business-related text")
+
         else:
             clean_input = clean_text(user_input)
 
             vec = vectorizer.transform([clean_input])
 
-            # Predictions
             sent = sentiment_model.predict(vec)[0]
             cat = category_model.predict(vec)[0]
 
@@ -160,7 +188,6 @@ with tab1:
 
             st.progress(int(confidence))
             st.write(f"Confidence: {confidence:.2f}%")
-
 # =========================
 # TAB 2: Dashboard
 # =========================
@@ -199,3 +226,4 @@ with tab3:
     ax.axis("off")
 
     st.pyplot(fig)
+    
